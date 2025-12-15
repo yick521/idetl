@@ -1,0 +1,81 @@
+[
+  {
+    "regularList": [
+      "(ip[honead]+)(?:.*os\\s([\\w.,/\\-]+)\\slike|;\\sopera)",
+      "(ip[honead]+).*os\\s([\\w.,/\\-]+)[);]",
+      "(ios)\\s([\\w.,/\\-]+)\\s*[);]"
+    ],
+    "funList": [
+      {
+        "name": "osType",
+        "value": "ios"
+      },
+      {
+        "name": "osVersion",
+        "r1": "[^a-zA-Z0-9 ]",
+        "r2": "."
+      }
+    ]
+  },
+  {
+    "regularList": [
+      "(ios|ip[honead]+)\\s*([;)])"
+    ],
+    "funList": [
+      {
+        "name": "osType",
+        "value": "ios"
+      },
+      {
+        "name": "osVersion",
+        "value": "unknown"
+      }
+    ]
+  },
+  {
+    "regularList": [
+      "linux;.*android.*(harmony).*;\\s*([\\w.,/\\-]+)\\s*[;)]"
+    ],
+    "funList": [
+      {
+        "name": "osType",
+        "value": "HarmonyOS"
+      },
+      {
+        "name": "osVersion",
+        "valueFlag": true
+      }
+    ]
+  },
+  {
+    "regularList": [
+      "linux;.*(android)\\s([\\w.,/\\-]+)\\s*[;)]"
+    ],
+    "funList": [
+      {
+        "name": "osType",
+        "value": "android"
+      },
+      {
+        "name": "osVersion",
+        "r1": "[^a-zA-Z0-9 ]",
+        "r2": "."
+      }
+    ]
+  },
+  {
+    "regularList": [
+      "linux;.*(android)\\s*([;)])"
+    ],
+    "funList": [
+      {
+        "name": "osType",
+        "value": "android"
+      },
+      {
+        "name": "osVersion",
+        "value": "unknown"
+      }
+    ]
+  }
+]

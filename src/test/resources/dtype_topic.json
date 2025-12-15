@@ -1,0 +1,13 @@
+{
+  "zgid":"zg_zgid",
+  "usr":"zg_user",
+  "evt":"zg_et",
+  "pl":"zg_pl",
+  "ss":"zg_st",
+  "se":"zg_se",
+  "total":"pay_zg_total",
+  "total_random":"pay_zg_total_random",
+  "toufang":"toufang_ad_user",
+  "toufang_kudu":"toufang_ad_kudu",
+  "data_quality":"pay_data_quality"
+}

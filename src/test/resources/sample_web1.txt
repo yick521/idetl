@@ -1,0 +1,32 @@
+--消费
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic sdklua_online
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pay_statisv2
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pay_zg_total_random
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pay_zg_total
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toufang_ad_user
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toufang_ad_kudu
+
+
+--生产数据
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic sdklua_online
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic pay_statisv2
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic toufang_ad_user
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic toufang_ad_kudu
+
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic pay_zg_total_random
+--百度搜索web数据模拟
+--广告
+{"data":[{"dt":"evt","pr":{"$ct":1663153525937,"$tz":28800000,"$sid":1663151298098,"$lid":233,"$lname":"百度搜索-web","$channel_type":"4","$push_type":"20","$token":"CRCQd9g4yqidGijXFHxsM5gMCj2MeLWI@yPltjOc39hKHKtA17Me4GyUwZOcqH7Vd","$zg_appid":177,"$channel_id":155,"$callback_url":"https://rt2.zhugeio.com/toufang/web?zg_appid=28&landing_page=http%3A%2F%2Fwww.baidu.com&app_key=82477c6bc49d4b82a01d7ce3c54c3047&channel_type=4&push_type=20&lid=178&lname=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&channel_id=155&utm_campaign=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_source=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_medium=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_term=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_content=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&baidu_token=CRCQd9g4yqidGijXFHxsM5gMCj2MeLWI%40yPltjOc39hKHKtA17Me4GyUwZOcqH7Vd&bd_vid=uANBIyIxUhNLgvw-I-tdPHmLrjKxP7tkPWm1nHRznW0drHDv","$eid":"广告点击","_redirecturl":"http://www.baidu.com","$channel_ad_name":"","$csite":0,"$channel_campaign_name":"","$channel_account_id":0,"$channel_campaign_id":0,"$channel_ad_id":0,"$channel_adgroup_name":"","$channel_adgroup_id":0,"$utm_source":"百度搜索-web","$utm_medium":"百度搜索-web","$utm_campaign":"百度搜索-web","$utm_content":"百度搜索-web","$utm_term":"百度搜索-web"}}],"sln":"itn","pl":"js","sdk":"zg_adver","sdkv":"2.0","owner":"zg","ut":"2022-09-14 18:43:49","tz":28800000,"debug":0,"ak":"6356d38afa0e42c3abf83925bfac3db3","usr":{"did":"a4cbe8fe-d8a8-4327-99ce-a4bde4d69dc6"},"ip":"54.222.198.31","st":1663152229894,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}
+--回传事件
+{"data":[{"dt":"evt","pr":{"$ct":1663152229894,"$tz":28800000,"$sid":1663151298098,"$channel_type":"4","$push_type":"20","$token":"CRCQd9g4yqidGijXFHxsM5gMCj2MeLWI@yPltjOc39hKHKtA17Me4GyUwZOcqH7Vd","$zg_appid":177,"$channel_id":155,"$callback_url":"https://rt2.zhugeio.com/toufang/web?zg_appid=28&landing_page=http%3A%2F%2Fwww.baidu.com&app_key=82477c6bc49d4b82a01d7ce3c54c3047&channel_type=4&push_type=20&lid=178&lname=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&channel_id=155&utm_campaign=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_source=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_medium=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_term=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&utm_content=%E7%99%BE%E5%BA%A6%E6%90%9C%E7%B4%A2-web&baidu_token=CRCQd9g4yqidGijXFHxsM5gMCj2MeLWI%40yPltjOc39hKHKtA17Me4GyUwZOcqH7Vd&bd_vid=uANBIyIxUhNLgvw-I-tdPHmLrjKxP7tkPWm1nHRznW0drHDv","$eid":"加购商品","_redirecturl":"http://www.baidu.com","$channel_ad_name":"","$csite":0,"$channel_campaign_name":"","$channel_account_id":0,"$channel_campaign_id":0,"$channel_ad_id":0,"$channel_adgroup_name":"","$channel_adgroup_id":0,"$utm_source":"百度搜索-web","$utm_medium":"百度搜索-web","$utm_campaign":"百度搜索-web","$utm_content":"百度搜索-web","$utm_term":"百度搜索-web"}}],"sln":"itn","pl":"js","sdk":"zg_adver","sdkv":"2.0","owner":"zg","ut":"2022-09-14 18:43:49","tz":28800000,"debug":0,"ak":"6356d38afa0e42c3abf83925bfac3db3","usr":{"did":"a4cbe8fe-d8a8-4327-99ce-a4bde4d69dc6"},"ip":"54.222.198.31","st":1663152229894,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}
+---
+86
+ use zanalytics;
+
+select  first_visit_time,last_visit_time,utm_source,utm_medium,current_country,current_device_brand,current_ov from  f_user_detail_28  where zg_id=86;
+
+select property_value from b_user_property_28 where   zg_id =86;
+
+
+--app端
+

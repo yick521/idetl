@@ -1,0 +1,157 @@
+上线前需要初始化 uid zgid 到ssdb  --问她们要脚本
+
+sbt clean
+sbt assembly   带依赖打包
+sbt package    不带依赖打包
+--rt1
+sudo scp -r etl-id-kudu-assembly-2.0-SNAPSHOT.jar  root@realtime-1:/home/yanghongyue/App/pay_id_kudu
+--rt2 realtime-1
+sudo scp -r etl-id-kudu-assembly-2.0-SNAPSHOT.jar  root@39.99.155.135:/home/yanghongyue/App/pay_id_kudu
+ --再拷贝到 realtime-2
+ cd /home/yanghongyue/App/pay_id_kudu
+ sudo scp -r etl-id-kudu-assembly-2.0-SNAPSHOT.jar  root@realtime-2:/etlApp/pay_id_kudu
+
+sudo scp -r  config root@realtime-1:/home/yanghongyue/App/pay_id_kudu
+sudo scp -r  impala_db_back.properties root@realtime-1:/home/yanghongyue/App/pay_id_kudu/config
+mv impala_db_back.properties impala_db.properties
+
+application_1643278252612_15626  最近一次提交应用
+
+
+spark-submit \
+--class com.zhugeio.etl.id.PayKuDuIdApp \
+--files /home/yanghongyue/App/pay_id_kudu/config/impala_db.properties,/home/yanghongyue/App/pay_id_kudu/config/basicSchema.json,/home/yanghongyue/App/pay_id_kudu/config/dim.json,/home/yanghongyue/App/pay_id_kudu/config/config.properties,/home/yanghongyue/App/pay_id_kudu/config/dtype_topic.json,/home/yanghongyue/App/pay_id_kudu/config/front_db.properties,/home/yanghongyue/App/pay_id_kudu/config/id_redis.properties,/home/yanghongyue/App/pay_id_kudu/config/log4j_id.properties \
+--master yarn --deploy-mode cluster --driver-memory 600m --executor-memory 1g \
+--conf "spark.executor.cores=8" \
+--conf "spark.yarn.maxAppAttempts=0" \
+--conf "spark.task.maxFailures=1"  \
+--conf "spark.dynamicAllocation.enabled=false" \
+--conf "spark.executor.instances=1"  \
+--conf "spark.driver.extraJavaOptions=-Dfile.encoding=utf-8" \
+--conf "spark.yarn.executor.memoryOverhead=1g" \
+--conf "spark.executor.extraJavaOptions=-Dlog4j.configuration=log4j_id.properties -Dfile.encoding=utf-8 -XX:+UseG1GC -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps" \
+--conf "spark.streaming.kafka.maxRatePerPartition=1000" \
+/home/yanghongyue/App/pay_id_kudu/etl-id-kudu-assembly-2.0-SNAPSHOT.jar 5
+
+
+--投放五期修改涉及类
+增加 adtoufang 包内容
+修改 cache.FrontCache
+修改 cache.FrontDao
+修改 redis.UidRedisClient
+修改 service.MainService
+
+--创建topic
+toufang_ad_kudu
+toufang_ad_user
+--联调
+   rt2 部署投放 : 前端（李佳）、后端（李海涛）、大数据（）
+
+--修改配置
+    1、修改 topic为 添加topic
+        dtype_topic.json
+    2、id_redis.properties 添加配置
+        uid_redis.lid.expireTime=2592000
+
+--rt2环境建表
+ads_link_event
+advertising_app
+ads_frequency_first
+
+ak 需在表中
+select id from company_app where app_key ="5f8a935cd15a47419df0e07d0547551b" and is_delete = 0 and stop = 0 and id not in (select id from tmp_transfer where status = 2)
+
+--测试样例
+1、ak在company_app表中存在，ak在advertising_app表中存在
+调增lid看首次和后续lid对应的值是否正确,注意时间 web端取 $ct  app端取 $click_time
+--web端测试数据
+{"sln":"itn","pl":"js","sdk":"zg-js","sdkv":"2.0","owner":"zg","ut":"2022-8-23 19:25:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf4"},"data":[{"dt":"evt","pr":{"$ct":1662540905001,"$tz":28800000,"$sid":1662022032396,"$lid":183,"$lname":"测试巨量网页","$channel_type":"2","$push_type":"20","$token":"","$zg_appid":461,"$channel_id":2,"$url":"https://uptest.zhugeapi.net/toufang/web?adid=1742756368215117&app_key=5f8a935cd15a47419df0e07d0547551b&channel_account_id=1737597858327629&channel_ad_id=1742756368216141&channel_ad_name=__CID_NAME__&channel_adgroup_id=1742756368215117&channel_adgroup_name=%E3%80%90%E4%BA%8B%E4%BB%B6%E7%AE%A1%E7%90%86%E8%90%BD%E5%9C%B0%E9%A1%B5%E8%81%94%E8%B0%83%E6%A8%A1%E7%89%88%E8%AE%A1%E5%88%92%28%E5%8B%BF%E5%88%A0%EF%BC%8C%E5%88%A0%E9%99%A4%E4%BC%9A%E9%80%A0%E6%88%90%E9%87%8D%E5%A4%A7%E4%BA%8B%E6%95%85%29%E3%80%91oCPM_07_07_12%3A47%3A111742756368215117&channel_campaign_id=1737674156507224&channel_campaign_name=%E3%80%90%E8%81%94%E8%B0%83%E6%A8%A1%E7%89%88%E5%B9%BF%E5%91%8A%E7%BB%84%28%E5%8B%BF%E5%88%A0%EF%BC%8C%E5%88%A0%E9%99%A4%E4%BC%9A%E9%80%A0%E6%88%90%E9%87%8D%E5%A4%A7%E4%BA%8B%E6%95%85%29%E3%80%91-%E8%A1%8C%E5%8A%A8%E8%BD%AC%E5%8C%96_%E9%94%80%E5%94%AE%E7%BA%BF%E7%B4%A2%E6%94%B6%E9%9B%86_07_07_14%3A26%3A52&channel_id=2&channel_type=2&clickid=EM3gh7LxoIwDGM6P8LuYAyDAp-LR5AEwDDgBQiIyMDIyMDkwMTE2NDcwODAxMDE1ODA1MTIxNTBDMDU5MkJDSAGQAQA&creativeid=1742756368216141&creativetype=5&csite=1&landing_page=https%3A%2F%2Fwww.baidu.com&lid=172&lname=%E6%B5%8B%E8%AF%95%E5%B7%A8%E9%87%8F%E7%BD%91%E9%A1%B5&push_type=20&utm_campaign=null&utm_content=null&utm_medium=null&utm_source=null&utm_term=null&zg_appid=461","$eid":"广告点击","_redirecturl":"https://www.baidu.com","$channel_ad_name":"","$csite":1,"$channel_campaign_name":"【联调模版广告组(勿删，删除会造成重大事故)】-行动转化_销售线索收集_07_07_14:26:52","$channel_account_id":1737597858327629,"$channel_campaign_id":1737674156507224,"$channel_ad_id":1742756368216141,"$channel_adgroup_name":"【事���管理落地页联调模版计划(勿删，删除会造成重大事故)】oCPM_07_07_12:47:111742756368215117","$channel_adgroup_id":1742756368215117,"$utm_source":"null","$utm_medium":"null","$utm_campaign":"null","$utm_content":"null","$utm_term":"null"}},{"dt":"usr","pr":{"$ct":1662636702670,"$tz":28800000,"$cuid":"用户属性","$sid":1662635514727,"$url":"http://localhost:63342/%E6%99%AE%E9%80%9AJS%E6%95%B0%E6%8D%AE%E4%B8%8A%E4%BC%A0%E9%A1%B5%E9%9D%A2/data-upload-spark1.html?_ijt=tcgepv90hc3qgh37vc3hq01kkk&_ij_reload=RELOAD_ON_SAVE","$ref":"","_用户属性99":"用户属性value"}}],"ip":"111.204.179.66","st":1661253580193,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}
+--不带evt 只有usr
+{"sln":"itn","pl":"js","sdk":"zg-js","sdkv":"2.0","owner":"zg","ut":"2022-8-23 19:25:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf4"},"data":[{"dt":"usr","pr":{"$ct":1662636702670,"$tz":28800000,"$cuid":"用户属性","$sid":1662635514727,"$url":"http://localhost:63342/%E6%99%AE%E9%80%9AJS%E6%95%B0%E6%8D%AE%E4%B8%8A%E4%BC%A0%E9%A1%B5%E9%9D%A2/data-upload-spark1.html?_ijt=tcgepv90hc3qgh37vc3hq01kkk&_ij_reload=RELOAD_ON_SAVE","$ref":"","_用户属性99":"用户属性value"}}],"ip":"111.204.179.66","st":1661253580193,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}
+{"sln":"itn","pl":"js","sdk":"zg-js","sdkv":"2.0","owner":"zg","ut":"2022-9-9 09:40:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf8","$zg_did":50},"data":[{"dt":"usr","pr":{"$ct":1662687605061,"$tz":28800000,"$cuid":"用户属性","$sid":1662687551745,"$url":"http://localhost:63342/%E6%99%AE%E9%80%9AJS%E6%95%B0%E6%8D%AE%E4%B8%8A%E4%BC%A0%E9%A1%B5%E9%9D%A2/data-upload-spark1.html?_ijt=tcgepv90hc3qgh37vc3hq01kkk&_ij_reload=RELOAD_ON_SAVE","$ref":"","_用户属性99":"用户属性value","$zg_did":50,"$zg_sid":1662687551745,"$zg_uid":11,"$zg_zgid":48,"_首次广告来源lid":182,"_首次广告来源":"测试巨量网页","$zg_upid#_首次广告来源":658,"$zg_uptp#_首次广告来源":"string","$zg_upid#_首次广告来源lid":659,"$zg_uptp#_首次广告来源lid":"number","$zg_upid#_用户属性99":657,"$zg_uptp#_用户属性99":"string"}},{"dt":"zgid","pr":{"$ct":1662687605061,"$zg_uid":11,"$zg_did":50,"$tz":28800000,"$zg_zgid":48}},{"dt":"pl","pr":{"$dv":"zhuge.io","$zg_did":50}},{"dt":"usr","pr":{"$ct":1662687605061,"$zg_uid":11,"$zg_did":50,"$tz":28800000,"$cuid":"用户属性","$zg_zgid":48}}],"ip":"54.222.198.31","st":1662687224171,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36","plat":3,"app_id":1}
+
+--app端 点击时广告数据
+{"sln":"itn","pl":"js","sdk":"zg_adtoufang","sdkv":"2.0","owner":"zg","ut":"2022-8-23 19:25:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf4"},"data":[{"dt":"adtf","pr":{"$channel_adgroup_id":1743300460683268,"$muid":"","$channel_adgroup_name":"【事件管理联调模版计划(勿删，删除会造成重大事故)】oCPM_07_07_21:10:441743300460683268","$channel_ad_id":1743300460685316,"$channel_ad_name":"","$channel_campaign_id":1737667807038520,"$requers_id":"","$csite":1,"$geo":"","$ctype":5,"$imei":"","$idfa":"","$idfa_md5":"","$android_id":"","$oaid":"","$oaid_md5":"","$ados":1,"$mac":"","$mac1":"","$convert_id":0,"$channel_campaign_name":"【联调模版广告组(勿删，删除会造成重大事故)】-行动转化_应用_07_07_12:44:26","$ip":"119.97.197.5","$ua":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148","$channel_account_id":1737597858327629,"$callback_url":"http://ad.toutiao.com/track/activate/?callback=CITAyKXcsIwDEITQyKXcsIwDGM6P8LuYAyDAp-LR5AEoADAMOAFCIjIwMjIwOTA3MTY1NTAyMDEwMTUxMTc0MDcyMTcwNkM1NDZIAVAAiAEAkAECmAEA&os=1&muid=1698EB1A-1E48-4B81-808D-CA0D0230F37E","$model":"iPhone XS Max","$union_site":0,"$lid":170,"$lname":"联调巨量APP","$channel_type":"2","$push_type":"10","$akey":"","$token":"","$zg_appid":461,"$utm_campaign":"null","$utm_source":"null","$utm_medium":"null","$utm_term":"null","$utm_content":"null","$channel_id":2,"$click_time":1662540905002,"$sl":"zh"}}],"ip":"111.204.179.66","st":1661253580193,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}
+--app端 ss 会话开始数据
+{"sln":"itn","pl":"js","sdk":"zg-js","sdkv":"2.0","owner":"zg","ut":"2022-8-23 19:25:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf4"},"data":[{"dt":"ss","pr":{"$channel_adgroup_id":1743300460683268,"$muid":"","$channel_adgroup_name":"【事件管理联调模版计划(勿删，删除会造成重大事故)】oCPM_07_07_21:10:441743300460683268","$channel_ad_id":1743300460685316,"$channel_ad_name":"","$channel_campaign_id":1737667807038520,"$requers_id":"","$csite":1,"$geo":"","$ctype":5,"$imei":"","$idfa":"","$idfa_md5":"","$android_id":"","$oaid":"","$oaid_md5":"","$ados":1,"$mac":"","$mac1":"","$convert_id":0,"$channel_campaign_name":"【联调模版广告组(勿删，删除会造成重大事故)】-行动转化_应用_07_07_12:44:26","$ip":"119.97.197.5","$ua":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148","$channel_account_id":1737597858327629,"$callback_url":"http://ad.toutiao.com/track/activate/?callback=CITAyKXcsIwDEITQyKXcsIwDGM6P8LuYAyDAp-LR5AEoADAMOAFCIjIwMjIwOTA3MTY1NTAyMDEwMTUxMTc0MDcyMTcwNkM1NDZIAVAAiAEAkAECmAEA&os=1&muid=1698EB1A-1E48-4B81-808D-CA0D0230F37E","$model":"iPhone XS Max","$union_site":0,"$channel_type":"2","$push_type":"10","$akey":"","$token":"","$zg_appid":461,"$utm_campaign":"null","$utm_source":"null","$utm_medium":"null","$utm_term":"null","$utm_content":"null","$channel_id":2,"$click_time":1662540905000,"$sl":"zh"}}],"ip":"111.204.179.66","st":1661253580193,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}
+--app端 evt 事件
+{"sln":"itn","pl":"js","sdk":"zg-js","sdkv":"2.0","owner":"zg","ut":"2022-8-23 19:25:05","tz":28800000,"debug":0,"ak":"5f8a935cd15a47419df0e07d0547551b","usr":{"did":"182c9f1ea99154c-0eccb59a6f8d28-1c525635-16a7f0-182c9f1ea9adf4"},"data":[{"dt":"evt","pr":{"$channel_adgroup_id":1743300460683268,"$muid":"","$channel_adgroup_name":"【事件管理联调模版计划(勿删，删除会造成重大事故)】oCPM_07_07_21:10:441743300460683268","$channel_ad_id":1743300460685316,"$channel_ad_name":"","$channel_campaign_id":1737667807038520,"$requers_id":"","$csite":1,"$geo":"","$ctype":5,"$imei":"","$idfa":"","$idfa_md5":"","$android_id":"","$oaid":"","$oaid_md5":"","$ados":1,"$mac":"","$mac1":"","$convert_id":0,"$channel_campaign_name":"【联调模版广告组(勿删，删除会造成重大事故)】-行动转化_应用_07_07_12:44:26","$ip":"119.97.197.5","$ua":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148","$channel_account_id":1737597858327629,"$callback_url":"http://ad.toutiao.com/track/activate/?callback=CITAyKXcsIwDEITQyKXcsIwDGM6P8LuYAyDAp-LR5AEoADAMOAFCIjIwMjIwOTA3MTY1NTAyMDEwMTUxMTc0MDcyMTcwNkM1NDZIAVAAiAEAkAECmAEA&os=1&muid=1698EB1A-1E48-4B81-808D-CA0D0230F37E","$model":"iPhone XS Max","$union_site":0,"$channel_type":"2","$push_type":"10","$akey":"","$token":"","$zg_appid":461,"$utm_campaign":"null","$utm_source":"null","$utm_medium":"null","$utm_term":"null","$utm_content":"null","$channel_id":2,"$click_time":1662540905000,"$sl":"zh"}}],"ip":"111.204.179.66","st":1661253580193,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"}
+
+--查看结果
+-- mysql 查看 事件属性
+select * from event_attr where attr_name ="广告分析链接ID";
+--impala 查看用户属性  impala-shell
+select * from b_user_property_1 where property_name="首次广告来源";
+select * from b_user_property_1 where property_name="首次广告来源lid";
+
+    消费者组初始化
+--spark环境是2182 vim /data/localization/kafka/consumer-id-test.properties
+zookeeper.connect=localhost:2182
+group.id=etl-id-test
+--初始化到最晚的偏移量
+
+/data/localization/kafka/bin/kafka-run-class.sh kafka.tools.UpdateOffsetsInZK latest /data/localization/kafka/id-consumer.properties pay_statisv2
+
+
+/data/localization/kafka/bin/kafka-run-class.sh kafka.tools.UpdateOffsetsInZK latest /data/localization/kafka/consumer-id-test.properties pay_statisv2
+
+/data/localization/kafka/bin/kafka-run-class.sh kafka.tools.UpdateOffsetsInZK earliest /data/localization/kafka/consumer-id-test.properties pay_statisv2
+
+
+
+
+--查看topic
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --describe --topic pay_zg_total_random
+
+
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --describe --topic toufang_ad_user_test
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --describe --topic toufang_ad_user
+
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --describe --topic toufang_ad_kudu
+
+--创建测试主题 topic pay_zg_total_random_test
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --create --topic toufang_ad_kudu --replication-factor 1 --partitions 1
+
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --create --topic pay_zg_total_random_test --replication-factor 1 --partitions 1
+
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --create --topic toufang_ad_user_test --replication-factor 1 --partitions 1
+
+
+--消费测试主题
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic sdklua_online
+
+
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pay_statisv2
+
+
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic pay_zg_total_random
+
+/data/localization/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toufang_ad_user_test --from-beginning
+
+--生产数据
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic pay_statisv2
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic sdklua_online
+
+
+--查看topic
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --describe --topic pay_zg_total_random_test
+--删除topic
+
+/data/localization/kafka/bin/kafka-topics.sh --zookeeper localhost:2182 --delete --topic pay_zg_total_random_test
+
+
+
+
+
+
+
+--spark2 生成的数据 sdklua_online
+
+/data/localization/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic sdklua_online
+
+
+{"Ip":"106.38.226.228","Now":1662618932419,"Header":"{\"host\":\"rt2.zhugeio.com\",\"accept-encoding\":\"gzip\",\"x-ad-attribution-type\":\"click_through\",\"user-agent\":\"Mozilla\\\/5.0\"}","Method":"GET","Args":"{\"event\":\"{\\\"data\\\":[{\\\"dt\\\":\\\"evt\\\",\\\"pr\\\":{\\\"$ct\\\":1662618932419,\\\"$tz\\\":28800000,\\\"$sid\\\":1662618932419,\\\"$lid\\\":172,\\\"$lname\\\":\\\"测试巨量网页\\\",\\\"$channel_type\\\":\\\"2\\\",\\\"$push_type\\\":\\\"20\\\",\\\"$token\\\":\\\"\\\",\\\"$zg_appid\\\":461,\\\"$channel_id\\\":2,\\\"$url\\\":\\\"https:\\\/\\\/rt2.zhugeio.com\\\/toufang\\\/web?zg_appid=461&landing_page=https%3A%2F%2Fwww.baidu.com&app_key=5f8a935cd15a47419df0e07d0547551b&channel_type=2&push_type=20&lid=172&lname=%E6%B5%8B%E8%AF%95%E5%B7%A8%E9%87%8F%E7%BD%91%E9%A1%B5&channel_id=2&utm_campaign=null&utm_source=null&utm_medium=null&utm_term=null&utm_content=null&channel_ad_name=&csite=1&channel_campaign_name=%E3%80%90%E8%81%94%E8%B0%83%E6%A8%A1%E7%89%88%E5%B9%BF%E5%91%8A%E7%BB%84%28%E5%8B%BF%E5%88%A0%EF%BC%8C%E5%88%A0%E9%99%A4%E4%BC%9A%E9%80%A0%E6%88%90%E9%87%8D%E5%A4%A7%E4%BA%8B%E6%95%85%29%E3%80%91-%E8%A1%8C%E5%8A%A8%E8%BD%AC%E5%8C%96_%E5%BA%94%E7%94%A8_07_07_12%3A44%3A26&channel_account_id=1737597858327629&channel_campaign_id=1737667807038520&channel_ad_id=1743382234792967&channel_adgroup_name=%E3%80%90%E4%BA%8B%E4%BB%B6%E7%AE%A1%E7%90%86%E8%81%94%E8%B0%83%E6%A8%A1%E7%89%88%E8%AE%A1%E5%88%92%28%E5%8B%BF%E5%88%A0%EF%BC%8C%E5%88%A0%E9%99%A4%E4%BC%9A%E9%80%A0%E6%88%90%E9%87%8D%E5%A4%A7%E4%BA%8B%E6%95%85%29%E3%80%91oCPM_07_07_21%3A10%3A441743382234792013&channel_adgroup_id=1743382234792013\\\",\\\"$eid\\\":\\\"广告点击\\\",\\\"_redirecturl\\\":\\\"https:\\\/\\\/www.baidu.com\\\",\\\"$channel_ad_name\\\":\\\"\\\",\\\"$csite\\\":1,\\\"$channel_campaign_name\\\":\\\"【联调模版广告组(勿删，删除会造成重大事故)】-行动转化_应用_07_07_12:44:26\\\",\\\"$channel_account_id\\\":1737597858327629,\\\"$channel_campaign_id\\\":1737667807038520,\\\"$channel_ad_id\\\":1743382234792967,\\\"$channel_adgroup_name\\\":\\\"【事件管理联调模版计划(勿删，删除会造成重大事故)】oCPM_07_07_21:10:441743382234792013\\\",\\\"$channel_adgroup_id\\\":1743382234792013,\\\"$utm_source\\\":\\\"null\\\",\\\"$utm_medium\\\":\\\"null\\\",\\\"$utm_campaign\\\":\\\"null\\\",\\\"$utm_content\\\":\\\"null\\\",\\\"$utm_term\\\":\\\"null\\\"}}],\\\"sln\\\":\\\"itn\\\",\\\"pl\\\":\\\"js\\\",\\\"sdk\\\":\\\"zg_adver\\\",\\\"sdkv\\\":\\\"2.0\\\",\\\"owner\\\":\\\"zg\\\",\\\"ut\\\":\\\"2022-09-08 14:35:32\\\",\\\"tz\\\":28800000,\\\"debug\\\":0,\\\"ak\\\":\\\"5f8a935cd15a47419df0e07d0547551b\\\",\\\"usr\\\":{\\\"did\\\":\\\"eb73b633-6208-419a-a208-f071da454d3b\\\"}}\"}"}
+
+
+
+
